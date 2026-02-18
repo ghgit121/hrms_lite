@@ -1,10 +1,12 @@
 import os
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import date
+import time
 
 from app.database import engine, Base, get_db
 from app.models import Employee, Attendance
@@ -12,19 +14,24 @@ from app.schemas import DashboardSummary
 from app.routers import employees, attendance
 from app.config import FRONTEND_URL, DATABASE_URL
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup
+    # Create tables on startup (non-blocking)
     try:
-        print(f"🔗 Connecting to database...")
-        print(f"   DATABASE_URL set: {bool(os.getenv('DATABASE_URL'))}")
-        print(f"   PORT: {os.getenv('PORT', 'not set')}")
+        logger.info("🔗 Connecting to database...")
+        logger.info(f"   DATABASE_URL set: {bool(os.getenv('DATABASE_URL'))}")
+        logger.info(f"   PORT: {os.getenv('PORT', 'not set')}")
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully")
+        logger.info("✅ Database tables created successfully")
     except Exception as e:
-        print(f"⚠️ Database table creation failed: {e}")
+        logger.error(f"⚠️ Database table creation failed: {e}")
     yield
+    logger.info("Shutting down...")
 
 
 app = FastAPI(
@@ -33,6 +40,16 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Add request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    logger.info(f"→ {request.method} {request.url.path}")
+    response = await call_next(request)
+    duration = time.time() - start_time
+    logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
+    return response
 
 # CORS — allow all origins for deployment flexibility
 app.add_middleware(
