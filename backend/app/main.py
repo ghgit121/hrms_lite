@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
@@ -9,13 +10,16 @@ from app.database import engine, Base, get_db
 from app.models import Employee, Attendance
 from app.schemas import DashboardSummary
 from app.routers import employees, attendance
-from app.config import FRONTEND_URL
+from app.config import FRONTEND_URL, DATABASE_URL
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables on startup
     try:
+        print(f"🔗 Connecting to database...")
+        print(f"   DATABASE_URL set: {bool(os.getenv('DATABASE_URL'))}")
+        print(f"   PORT: {os.getenv('PORT', 'not set')}")
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully")
     except Exception as e:
@@ -30,16 +34,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — allow frontend origins
-origins = [
-    FRONTEND_URL,
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-
+# CORS — allow all origins for deployment flexibility
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,7 +55,20 @@ def root():
 
 @app.get("/api/health")
 def health():
-    return {"status": "healthy"}
+    db_ok = False
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception:
+        pass
+    return {
+        "status": "healthy",
+        "database": "connected" if db_ok else "disconnected",
+        "database_url_set": bool(os.getenv("DATABASE_URL")),
+        "port": os.getenv("PORT", "not set"),
+    }
 
 
 @app.get("/api/dashboard", response_model=DashboardSummary)
