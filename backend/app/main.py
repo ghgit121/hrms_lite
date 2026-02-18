@@ -15,7 +15,11 @@ from app.config import FRONTEND_URL
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Create tables on startup
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully")
+    except Exception as e:
+        print(f"⚠️ Database table creation failed: {e}")
     yield
 
 
