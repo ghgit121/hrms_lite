@@ -138,3 +138,12 @@ The app will be available at `http://localhost:5173`
 - `date_from` — Filter from date (YYYY-MM-DD)
 - `date_to` — Filter to date (YYYY-MM-DD)
 
+## Assumptions & Limitations
+
+- Single admin user (no authentication/authorization required)
+- No role-based access control
+- Employee ID is manually assigned (not auto-generated)
+- Attendance can be updated/overwritten for the same employee and date
+- No leave management, payroll, or shift tracking features
+- Database tables are auto-created on first deployment
+
