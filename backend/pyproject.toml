@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hrms-lite-backend"
+version = "1.0.0"
+description = "HRMS Lite Backend API"
+requires-python = ">=3.10"
