@@ -6,8 +6,8 @@ A lightweight Human Resource Management System for managing employee records and
 
 ## Live Demo
 
-- **Frontend**: _[Add your Vercel URL here]_
-- **Backend API**: _[Add your Railway URL here]_
+- **Frontend**: https://hrms-lite-one-theta.vercel.app/
+- **Backend API**: https://hrmslite-production-2641.up.railway.app/
 
 ## Tech Stack
 
