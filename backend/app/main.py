@@ -30,6 +30,12 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Database tables created successfully")
     except Exception as e:
         logger.error(f"⚠️ Database table creation failed: {e}")
+    
+    logger.info("=" * 60)
+    logger.info("🚀 HRMS Lite API is READY and listening for requests")
+    logger.info(f"   Port: {os.getenv('PORT', 'not set')}")
+    logger.info("=" * 60)
+    
     yield
     logger.info("Shutting down...")
 
@@ -40,16 +46,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
-# Add request logging middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start_time = time.time()
-    logger.info(f"→ {request.method} {request.url.path}")
-    response = await call_next(request)
-    duration = time.time() - start_time
-    logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
-    return response
 
 # CORS — allow all origins for deployment flexibility
 app.add_middleware(
@@ -67,11 +63,13 @@ app.include_router(attendance.router)
 
 @app.get("/")
 def root():
+    logger.info("🎯 Root endpoint called!")
     return {"message": "HRMS Lite API is running", "version": "1.0.0"}
 
 
 @app.get("/api/health")
 def health():
+    logger.info("🏥 Health check called!")
     db_ok = False
     try:
         from sqlalchemy import text
